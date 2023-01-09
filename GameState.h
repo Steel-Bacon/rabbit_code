@@ -26,7 +26,7 @@ public:
 
 class GameState :public State {
 private:
-	//ªì©l¤Æª«¥ó«Å§i
+	//åˆå§‹åŒ–ç‰©ä»¶å®£å‘Š
 	std::unique_ptr<shi::SimpleSprite> onDrag;
 	shi::SimpleSprite sprForward;
 	shi::SimpleSprite sprLoop;
@@ -47,7 +47,7 @@ private:
 
 
 private:
-	//«ü¥O¬ÛÃö«Å§i
+	//æŒ‡ä»¤ç›¸é—œå®£å‘Š
 	enum cmdType {
 		none,
 		forward,
@@ -68,7 +68,7 @@ private:
 	int mouseHoverIndex = -1;
 
 private:
-	//¥D¨¤¬ÛÃö«Å§i
+	//ä¸»è§’ç›¸é—œå®£å‘Š
 	enum direction {
 		up,down,left,right
 	};
@@ -86,7 +86,7 @@ private:
 	olc::vi2d lastPos = { 3,3 };
 
 private:
-	//¹CÀ¸ª¬ºA¬ÛÃö«Å§i
+	//éŠæˆ²ç‹€æ…‹ç›¸é—œå®£å‘Š
 	enum actionState {
 		state_ini,
 		editCommand,
@@ -98,7 +98,7 @@ private:
 	std::vector<int> loopCountList;
 	std::vector<int> loopRteurnList;
 	float animationTime = 0;
-	int mapIndex = 1;//³]©wªì©l¦a¹Ï
+	int mapIndex = 1;//è¨­å®šåˆå§‹åœ°åœ–
 	int totalCoinGet = 0;
 	int currentCoinGet = 0;
 
@@ -106,11 +106,11 @@ public:
 	State* run(float fElapsedTime, olc::PixelGameEngine* engine) override;
 };
 
-//-----------------------¥H¤W¬°«Å§i-----------------------------
-//-----------------------¥H¤U¬°¹ê§@-----------------------------
+//-----------------------ä»¥ä¸Šç‚ºå®£å‘Š-----------------------------
+//-----------------------ä»¥ä¸‹ç‚ºå¯¦ä½œ-----------------------------
 
 State* SplashState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
-	//¶}±Ò¹CÀ¸®ÉÅã¥Ü¥vµÜ©i°Ó¼Ğ
+	//é–‹å•ŸéŠæˆ²æ™‚é¡¯ç¤ºå²èŠå§†å•†æ¨™
 	engine->Clear(olc::BLACK);
 	if (state_ini) {
 		state_ini = false;
@@ -146,7 +146,7 @@ State* SplashState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 	switch (currentAction) {
 	case state_ini:
-		//ªì©l¤Æ¶¥¬q¡A¥u°õ¦æ¤@¦¸
+		//åˆå§‹åŒ–éšæ®µï¼ŒåªåŸ·è¡Œä¸€æ¬¡
 		sprForward.ini(asset::sprForward, { 300,0 });
 		sprForward.setSize({ 50,50 });
 		sprLoop.ini(asset::sprLoop, { 300,50 });
@@ -168,9 +168,9 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 		sprNext.ini(asset::sprNext, { 75,25 });
 		sprNext.setSize({ 250,250 });
 		if (mapIndex > 8) {
-			//¹CÀ¸µ²§ô
+			//éŠæˆ²çµæŸ
 		}
-		else mapData = shiMap::maps[mapIndex];//¸ü¤J¦a¹Ï
+		else mapData = shiMap::maps[mapIndex];//è¼‰å…¥åœ°åœ–
 		playerPos = mapData->getSpawnPoint();
 		lastPos = playerPos;
 		coinPosList = mapData->getCoinPos();
@@ -204,32 +204,32 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 		currentCoinGet = 0;
 		break;
 	case editCommand:
-		//«ü¥O½s¿è¼Ò¦¡¡A±µ¨üª±®a¾Ş§@
+		//æŒ‡ä»¤ç·¨è¼¯æ¨¡å¼ï¼Œæ¥å—ç©å®¶æ“ä½œ
 
-		//·Æ¹«ÂIÀ»¥ªÁä¡A§PÂ_ª±®aÂI¤F¬Æ»òªF¦è
+		//æ»‘é¼ é»æ“Šå·¦éµï¼Œåˆ¤æ–·ç©å®¶é»äº†ç”šéº¼æ±è¥¿
 		if (engine->GetMouse(0).bPressed) {
 			olc::vi2d mousePos = engine->GetMousePos();
 
 			if (mousePos.x > 300 && mousePos.x < 350) {
-				//ÂIÀ»±±¨î¤¸¥ó®É
-				if (mousePos.y < 50) { //©Ô¨ú«e¶i¤î¥O
+				//é»æ“Šæ§åˆ¶å…ƒä»¶æ™‚
+				if (mousePos.y < 50) { //æ‹‰å–å‰é€²æ­¢ä»¤
 					onDrag = std::make_unique<shi::SimpleSprite>(asset::forward);
 					onDragCmd = forward;
 				}
-				else if (mousePos.y < 100) { //©Ô¨ú°j°é¤î¥O
+				else if (mousePos.y < 100) { //æ‹‰å–è¿´åœˆæ­¢ä»¤
 					onDrag = std::make_unique<shi::SimpleSprite>(asset::loop);
 					onDragCmd = loop_start;
 				}
-				else if (mousePos.y < 150) { //©Ô¨ú¥ªÂà¤î¥O
+				else if (mousePos.y < 150) { //æ‹‰å–å·¦è½‰æ­¢ä»¤
 					onDrag = std::make_unique<shi::SimpleSprite>(asset::left);
 					onDragCmd = turn_left;
 				}
-				else if (mousePos.y < 200) { //©Ô¨ú¥kÂà¤î¥O
+				else if (mousePos.y < 200) { //æ‹‰å–å³è½‰æ­¢ä»¤
 					onDrag = std::make_unique<shi::SimpleSprite>(asset::right);
 					onDragCmd = turn_right;
 				}
 				else if (mousePos.y < 250 && cmdList.size()>0) {
-					//ÂIÀ»¶}©l«ö¶s¡A¤Á´«¨ì°õ¦æ«ü¥O¼Ò¦¡
+					//é»æ“Šé–‹å§‹æŒ‰éˆ•ï¼Œåˆ‡æ›åˆ°åŸ·è¡ŒæŒ‡ä»¤æ¨¡å¼
 					currentAction = execCommand;
 					int loopCount = 0;
 					for (int i = 0; i < cmdList.size(); i++) {
@@ -241,7 +241,7 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 				}
 			}
 			else if (mousePos.x > 350) {
-				//ÂIÀ»«ü¥O¦C®É
+				//é»æ“ŠæŒ‡ä»¤åˆ—æ™‚
 				int index = (engine->GetMouseY() - 15) / 20;
 				if (index < cmdList.size()) {
 					switch (cmdList[index].type) {
@@ -265,13 +265,13 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 			}
 		}
 
-		//©ì©Ôª¬ºA¡AÅı©ì¦²ªºªF¦è¸òµÛ·Æ¹«²¾°Ê
+		//æ‹–æ‹‰ç‹€æ…‹ï¼Œè®“æ‹–æ›³çš„æ±è¥¿è·Ÿè‘—æ»‘é¼ ç§»å‹•
 		if (onDrag != nullptr) {
 			if (engine->GetMouse(0).bHeld) {
 				onDrag.get()->pos = engine->GetMousePos() - onDrag.get()->getSize() / 2;
 				onDrag.get()->tint = olc::PixelF(1.0, 1.0, 1.0, 0.5);
 
-				//«ü¥O©ì¨ì«ü¥O¦C¤W¤è®É¡A¹w§P©ñ¸m«ü¥Oªº¦ì¸m
+				//æŒ‡ä»¤æ‹–åˆ°æŒ‡ä»¤åˆ—ä¸Šæ–¹æ™‚ï¼Œé åˆ¤æ”¾ç½®æŒ‡ä»¤çš„ä½ç½®
 				if (engine->GetMouseX() > 350 && 
 					(mouseHoverIndex>=0 || 
 						cmdList.size() < 13 || 
@@ -299,11 +299,11 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 				}
 			}
 
-			//©ñ¶}©ì¦²ªºªF¦è¡A§PÂ_©ñ¦b­ş¸Ì
+			//æ”¾é–‹æ‹–æ›³çš„æ±è¥¿ï¼Œåˆ¤æ–·æ”¾åœ¨å“ªè£¡
 			if (engine->GetMouse(0).bReleased) {
 				if (mouseHoverIndex >= 0) {
 					if (mouseHoverIndex < cmdList.size()) {
-						//¦b«ü¥O¦C¤º¡A´¡¤J«ü¥O
+						//åœ¨æŒ‡ä»¤åˆ—å…§ï¼Œæ’å…¥æŒ‡ä»¤
 						switch (onDragCmd) {
 						case forward:
 							cmdList.insert(cmdList.begin() + mouseHoverIndex, forward);
@@ -320,7 +320,7 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 							break;
 						}
 					}else {
-						//¦b«ü¥O¦C¥~¡A·s¼W«ü¥O¨ì§Àºİ
+						//åœ¨æŒ‡ä»¤åˆ—å¤–ï¼Œæ–°å¢æŒ‡ä»¤åˆ°å°¾ç«¯
 						switch (onDragCmd) {
 						case forward:
 							cmdList.push_back(forward);
@@ -339,8 +339,8 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 					}
 				}
 
-				//µ²§ô©ì¦²ª¬ºA
-				onDrag.release();
+				//çµæŸæ‹–æ›³ç‹€æ…‹
+				onDrag = nullptr;
 				onDragCmd = none; 
 				for (auto it = cmdList.begin(); it != cmdList.end(); it++) {
 					if (it->type == none) {
@@ -352,7 +352,7 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 			}
 		}
 
-		//«ö¤U¥kÁä¡A§R°£¥k°¼«ü¥Oª«¥ó
+		//æŒ‰ä¸‹å³éµï¼Œåˆªé™¤å³å´æŒ‡ä»¤ç‰©ä»¶
 		if (engine->GetMouse(1).bPressed && engine->GetMouseX() > 350) {
 			int index = (engine->GetMouseY() - 15) / 20;
 			if (index < cmdList.size()) {
@@ -361,10 +361,10 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 		}
 		break;
 	case execCommand:
-		//°õ¦æ«ü¥O¼Ò¦¡¡Aª±®a¥iÂI¤U­«¸m«ö¶s¦^¨ì½s¿è¼Ò¦¡
+		//åŸ·è¡ŒæŒ‡ä»¤æ¨¡å¼ï¼Œç©å®¶å¯é»ä¸‹é‡ç½®æŒ‰éˆ•å›åˆ°ç·¨è¼¯æ¨¡å¼
 
 		if(animationTime>0) { 
-			//animationTime>0®É¤£¦æ«ü¥O¡A­pºâ°Ê§@®É¶¡
+			//animationTime>0æ™‚ä¸è¡ŒæŒ‡ä»¤ï¼Œè¨ˆç®—å‹•ä½œæ™‚é–“
 			animationTime -= fElapsedTime;
 			if (animationTime <= 0) {
 				animationTime = 0;
@@ -373,13 +373,13 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 			}
 		}
 		else if (playerPos == mapData->getStarPos()) {
-			//ª±®a¨ì¹F²×ÂI®É¡A¶i¤J¤U¤@Ãö(³qÃöµe­±)
+			//ç©å®¶åˆ°é”çµ‚é»æ™‚ï¼Œé€²å…¥ä¸‹ä¸€é—œ(é€šé—œç•«é¢)
 			currentAction = levelCleared;
 		}
 		else if (animationTime <= 0 && programCount< cmdList.size()) {
-			//animationTime<=0®É¡A®Ú¾ÚprogramCount°õ¦æ·í«e«ü¥O
+			//animationTime<=0æ™‚ï¼Œæ ¹æ“šprogramCountåŸ·è¡Œç•¶å‰æŒ‡ä»¤
 			switch (cmdList[programCount].type) {
-			case forward: //«e¶i«ü¥O¡A®Ú¾Ú­±¹ï¤è¦V²¾°Ê¥D¨¤¡A«e¤è®æ¤l¬°0(¦aªO)®É¤~¯à«e¶i
+			case forward: //å‰é€²æŒ‡ä»¤ï¼Œæ ¹æ“šé¢å°æ–¹å‘ç§»å‹•ä¸»è§’ï¼Œå‰æ–¹æ ¼å­ç‚º0(åœ°æ¿)æ™‚æ‰èƒ½å‰é€²
 				switch (playerDir) {
 				case up:
 					if (playerPos.y != 0 &&
@@ -402,7 +402,7 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 						playerPos += getDir2d(playerDir);
 					break;
 				}
-				//§PÂ_«e¶i«á·|¤£·|¦Y¨ìª÷¹ô
+				//åˆ¤æ–·å‰é€²å¾Œæœƒä¸æœƒåƒåˆ°é‡‘å¹£
 				for (int i = 0; i < coinPosList.size(); i++) {
 					if (playerPos == coinPosList[i]) {
 						coinPosList.erase(coinPosList.begin() + i);
@@ -410,7 +410,7 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 					}
 				}
 				break;
-			case turn_left: //¥ªÂà«ü¥O
+			case turn_left: //å·¦è½‰æŒ‡ä»¤
 				switch (playerDir) {
 				case up:
 					playerDir = left;
@@ -426,7 +426,7 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 					break;
 				}
 				break;
-			case turn_right: //¥kÂà«ü¥O
+			case turn_right: //å³è½‰æŒ‡ä»¤
 				switch (playerDir) {
 				case up:
 					playerDir = right;
@@ -442,11 +442,11 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 					break;
 				}
 				break;
-			case loop_start: //°j°éÀY
+			case loop_start: //è¿´åœˆé ­
 				loopCountList.push_back(cmdList[programCount].loopCount-1);
 				loopRteurnList.push_back(programCount);
 				break;
-			case loop_end: //°j°é§À
+			case loop_end: //è¿´åœˆå°¾
 				int loopCount = loopCountList.back();
 				loopCountList.pop_back();
 				if (loopCount > 0) {
@@ -457,7 +457,7 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 				}
 				break;
 			}
-			//®Ú¾Úª±®a¤è¦V§ïÅÜ¹Ï®×
+			//æ ¹æ“šç©å®¶æ–¹å‘æ”¹è®Šåœ–æ¡ˆ
 			switch (playerDir)
 			{
 			case up:
@@ -476,7 +476,7 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 			animationTime = 0.5f;
 		}
 
-		//­Y«ü¥O°õ¦æ§¹²¦¡A¶i¤Jµ¥«İ
+		//è‹¥æŒ‡ä»¤åŸ·è¡Œå®Œç•¢ï¼Œé€²å…¥ç­‰å¾…
 		if (programCount >= cmdList.size()) {
 			loopCountList.clear();
 			loopRteurnList.clear();
@@ -484,7 +484,7 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 			player.animation = asset::aniPlayerIdle;
 		}
 
-		//­Yª±®a«ö¤U­«¸m«ö¶s¡A«h­«¸m¹CÀ¸¦^¨ì°õ¦æ«eª¬ºA
+		//è‹¥ç©å®¶æŒ‰ä¸‹é‡ç½®æŒ‰éˆ•ï¼Œå‰‡é‡ç½®éŠæˆ²å›åˆ°åŸ·è¡Œå‰ç‹€æ…‹
 		if (engine->GetMouse(0).bPressed &&
 			engine->GetMouseX() > 300 && engine->GetMouseX() < 350 &&
 			engine->GetMouseY() > 250 && engine->GetMouseY() < 300) {
@@ -502,7 +502,7 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 		}
 		break;
 	case GameState::levelCleared:
-		//¹LÃöµe­±
+		//éé—œç•«é¢
 		if (engine->GetMouse(0).bPressed) {
 			mapIndex++;
 			currentAction = state_ini;
@@ -514,17 +514,17 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 	}
 	
 
-	//Åã¥Üµe­±¶¥¬q¡A¦³°õ¦ædraw()ªº¹Ï¹³¤~·|¥X²{¦bµe­±¤W
+	//é¡¯ç¤ºç•«é¢éšæ®µï¼Œæœ‰åŸ·è¡Œdraw()çš„åœ–åƒæ‰æœƒå‡ºç¾åœ¨ç•«é¢ä¸Š
 	engine->Clear({128,128,255});
 
-	//µe¥X¦a¹Ï¤è®æ(¦aªO©M¤ÑªÅ))
+	//ç•«å‡ºåœ°åœ–æ–¹æ ¼(åœ°æ¿å’Œå¤©ç©º))
 	sprSea.draw(engine);
 	for (int x = 0; x < 10; x++) for (int y = 0; y < 10; y++) {
 		if(mapData.get()->getMap()[x + 10 * y] == 0) map[x][y].draw(engine);
 	}
 	sprBar.draw(engine);
 
-	//µe¥Xª÷¹ô
+	//ç•«å‡ºé‡‘å¹£
 	for (int i = 0; i < coinPosList.size(); i++) {
 		int index = coinPosList[i].x * 10 + coinPosList[i].y;
 		sprCoinList[index]->pos = coinPosList[i] * 30 + olc::vi2d(5, 5);
@@ -532,7 +532,7 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 		sprCoinList[index]->setSize({ 20,20 });
 	}
 
-	//µe¥X¥k°¼ªº«ü¥O¦C
+	//ç•«å‡ºå³å´çš„æŒ‡ä»¤åˆ—
 	int inLoop = 0;
 	for (int i = 0; i < cmdList.size(); i++) {
 		switch (cmdList[i].type) {
@@ -554,7 +554,7 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 			break;
 		}
 
-		//¦b°j°é¸Ìªº«ü¥O¥k²¾¡A¨Ãµe¥X°j°é¥ª°¼ÃäÃä
+		//åœ¨è¿´åœˆè£¡çš„æŒ‡ä»¤å³ç§»ï¼Œä¸¦ç•«å‡ºè¿´åœˆå·¦å´é‚Šé‚Š
 		for (int j = 0; j < inLoop; j++) {
 			if(j >= sprSideLineList.size()) sprSideLineList.push_back(std::make_unique<shi::SimpleSprite>(asset::loop_side));
 			sprSideLineList[j]->pos = { 350 + j * 3,cmdSprt[i].pos.y };
@@ -562,15 +562,15 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 		}
 		cmdSprt[i].pos.x = 350 + inLoop * 3;
 		if (cmdList[i].type == loop_start) inLoop++;
-		//°õ¦æ¤¤ªº«ü¥OÃC¦âÅÜ·t
+		//åŸ·è¡Œä¸­çš„æŒ‡ä»¤é¡è‰²è®Šæš—
 		if (i == programCount && currentAction == execCommand) cmdSprt[i].tint = olc::GREY;
 		else cmdSprt[i].tint = olc::WHITE;
-		//¹w­pª±®a©ñ¤U«ü¥Oªº¦ì¸m¯dªÅ¥Õ
+		//é è¨ˆç©å®¶æ”¾ä¸‹æŒ‡ä»¤çš„ä½ç½®ç•™ç©ºç™½
 		if (cmdList[i].type == none) cmdSprt[i].tint = olc::BLANK;
 		cmdSprt[i].draw(engine);
 	}
 
-	//µe¥X±±¨î¶µ¤¸¥ó
+	//ç•«å‡ºæ§åˆ¶é …å…ƒä»¶
 	sprForward.draw(engine);
 	sprLoop.draw(engine);
 	sprLeft.draw(engine);
@@ -582,10 +582,10 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 	else sprReset.tint = olc::WHITE;
 	sprReset.draw(engine);
 	sprStar.draw(engine);
-	//µe¥X¥¿¦b©ì©Ôªº¤¸¥ó
+	//ç•«å‡ºæ­£åœ¨æ‹–æ‹‰çš„å…ƒä»¶
 	if (onDrag != nullptr) onDrag.get()->draw(engine);
 
-	//µe¥X¥D¨¤¡A¦b°õ¦æ®É¸òµÛ«ü¥O²¾°Ê
+	//ç•«å‡ºä¸»è§’ï¼Œåœ¨åŸ·è¡Œæ™‚è·Ÿè‘—æŒ‡ä»¤ç§»å‹•
 	if(animationTime>0 && cmdList[programCount].type == forward)
 		player.pos = playerPos * tileSize - olc::vf2d(playerPos * tileSize - lastPos * tileSize) * animationTime * 2;
 	else
