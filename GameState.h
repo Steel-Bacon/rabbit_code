@@ -114,9 +114,9 @@ State* SplashState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 	engine->Clear(olc::BLACK);
 	if (state_ini) {
 		state_ini = false;
-		sprSlime.ini(asset::slime);
+		sprSlime.ini(asset::sprSlime);
 		sprSlime.pos = (olc::vi2d(400, 300) - sprSlime.getSize()) / 2;
-		sprMenu.ini(asset::menu);
+		sprMenu.ini(asset::sprMenu);
 		sprMenu.setSize({ 400,300 });
 	}
 	else displayedTime += fElapsedTime;
@@ -174,19 +174,19 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 		playerPos = mapData->getSpawnPoint();
 		lastPos = playerPos;
 		coinPosList = mapData->getCoinPos();
-		sprStar.ini(asset::star, mapData->getStarPos()*30);
+		sprStar.ini(asset::sprStar, mapData->getStarPos()*30);
 		for (int x = 0; x < 10; x++) for (int y = 0; y < 10; y++) {
 			switch (mapData.get()->getMap()[x + 10*y]) {
 			case 0:
-				map[x][y].ini(asset::ground, tileSize * olc::vi2d(x, y));
+				map[x][y].ini(asset::sprGround, tileSize * olc::vi2d(x, y));
 				break;
 			case 1:
-				map[x][y].ini(asset::air, tileSize * olc::vi2d(x, y));
+				map[x][y].ini(asset::sprAir, tileSize * olc::vi2d(x, y));
 				break;
 			}
 		}
 		for (int i = 0; i < 14; i++) {
-			cmdSprt[i].ini(asset::forward, { 350, i * 20 -5});
+			cmdSprt[i].ini(asset::sprForward, { 350, i * 20 -5});
 		}
 		for (int i = 0; i < coinPosList.size(); i++) {
 			sprCoinList[coinPosList[i].x * 10 + coinPosList[i].y] = std::make_unique<shi::SimpleSprite>();
@@ -213,19 +213,19 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 			if (mousePos.x > 300 && mousePos.x < 350) {
 				//點擊控制元件時
 				if (mousePos.y < 50) { //拉取前進止令
-					onDrag = std::make_unique<shi::SimpleSprite>(asset::forward);
+					onDrag = std::make_unique<shi::SimpleSprite>(asset::sprForward);
 					onDragCmd = forward;
 				}
 				else if (mousePos.y < 100) { //拉取迴圈止令
-					onDrag = std::make_unique<shi::SimpleSprite>(asset::loop);
+					onDrag = std::make_unique<shi::SimpleSprite>(asset::sprLoop);
 					onDragCmd = loop_start;
 				}
 				else if (mousePos.y < 150) { //拉取左轉止令
-					onDrag = std::make_unique<shi::SimpleSprite>(asset::left);
+					onDrag = std::make_unique<shi::SimpleSprite>(asset::sprLeft);
 					onDragCmd = turn_left;
 				}
 				else if (mousePos.y < 200) { //拉取右轉止令
-					onDrag = std::make_unique<shi::SimpleSprite>(asset::right);
+					onDrag = std::make_unique<shi::SimpleSprite>(asset::sprRight);
 					onDragCmd = turn_right;
 				}
 				else if (mousePos.y < 250 && cmdList.size()>0) {
@@ -247,15 +247,15 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 					switch (cmdList[index].type) {
 					case forward:
 						onDragCmd = cmdList[index].type;
-						onDrag = std::make_unique<shi::SimpleSprite>(asset::forward);
+						onDrag = std::make_unique<shi::SimpleSprite>(asset::sprForward);
 						break;
 					case turn_left:
 						onDragCmd = cmdList[index].type;
-						onDrag = std::make_unique<shi::SimpleSprite>(asset::left);
+						onDrag = std::make_unique<shi::SimpleSprite>(asset::sprLeft);
 						break;
 					case turn_right:
 						onDragCmd = cmdList[index].type;
-						onDrag = std::make_unique<shi::SimpleSprite>(asset::right);
+						onDrag = std::make_unique<shi::SimpleSprite>(asset::sprRight);
 						break;
 					}
 				}
@@ -556,7 +556,7 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 
 		//在迴圈裡的指令右移，並畫出迴圈左側邊邊
 		for (int j = 0; j < inLoop; j++) {
-			if(j >= sprSideLineList.size()) sprSideLineList.push_back(std::make_unique<shi::SimpleSprite>(asset::loop_side));
+			if(j >= sprSideLineList.size()) sprSideLineList.push_back(std::make_unique<shi::SimpleSprite>(asset::sprLoop_side));
 			sprSideLineList[j]->pos = { 350 + j * 3,cmdSprt[i].pos.y };
 			sprSideLineList[j]->draw(engine);
 		}
