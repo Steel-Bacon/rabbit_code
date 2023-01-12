@@ -242,25 +242,60 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 			}
 			else if (mousePos.x > 350) {
 				//點擊指令列時
-				int index = (engine->GetMouseY() - 15) / 20;
+				int index = (engine->GetMouseY() - 15) / 20, loopCount = 0;
 				if (index < cmdList.size()) {
 					switch (cmdList[index].type) {
 					case forward:
 						onDragCmd = cmdList[index].type;
 						onDrag = std::make_unique<shi::SimpleSprite>(asset::sprForward);
+						cmdList.erase(cmdList.begin() + index);
 						break;
 					case turn_left:
 						onDragCmd = cmdList[index].type;
 						onDrag = std::make_unique<shi::SimpleSprite>(asset::sprLeft);
+						cmdList.erase(cmdList.begin() + index);
 						break;
 					case turn_right:
 						onDragCmd = cmdList[index].type;
 						onDrag = std::make_unique<shi::SimpleSprite>(asset::sprRight);
+						cmdList.erase(cmdList.begin() + index);
+						break;
+					case loop_start:
+						onDragCmd = loop_start;
+						onDrag = std::make_unique<shi::SimpleSprite>(asset::sprLoop);
+						//如果是迴圈頭，就刪除對應的迴圈尾
+						loopCount = 0;
+						for (auto it = cmdList.begin() + index; it != cmdList.end(); it++) {
+							switch (it->type) {
+							case loop_start: loopCount++; break;
+							case loop_end: loopCount--; break;
+							}
+							if (loopCount == 0) {
+								cmdList.erase(it);
+								break;
+							}
+						}
+						cmdList.erase(cmdList.begin() + index);
+						break;
+					case loop_end:
+						onDragCmd = loop_start;
+						onDrag = std::make_unique<shi::SimpleSprite>(asset::sprLoop);
+						//如果是迴圈尾，就刪除對應的迴圈頭
+						loopCount = 0;
+						for (auto it = cmdList.begin() + index; it >= cmdList.begin(); it--) {
+							switch (it->type) {
+							case loop_start: loopCount++; break;
+							case loop_end: loopCount--; break;
+							}
+							if (loopCount == 0) {
+								cmdList.erase(it);
+								index--;
+								break;
+							}
+						}
+						cmdList.erase(cmdList.begin() + index);
 						break;
 					}
-				}
-				if (onDragCmd != none) {
-					cmdList.erase(cmdList.begin()+ index);
 				}
 			}
 		}
@@ -356,6 +391,38 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 		if (engine->GetMouse(1).bPressed && engine->GetMouseX() > 350) {
 			int index = (engine->GetMouseY() - 15) / 20;
 			if (index < cmdList.size()) {
+
+				if ((cmdList.begin() + index)->type == loop_start) {
+					//如果是迴圈頭，就刪除對應的迴圈尾
+					int loopCount = 0;
+					for (auto it = cmdList.begin() + index; it != cmdList.end(); it++) {
+						switch (it->type) {
+						case loop_start: loopCount++; break;
+						case loop_end: loopCount--; break;
+						}
+						if (loopCount == 0) {
+							cmdList.erase(it);
+							break;
+						}
+					}
+				}
+
+				if ((cmdList.begin() + index)->type == loop_end) {
+					//如果是迴圈尾，就刪除對應的迴圈頭
+					int loopCount = 0;
+					for (auto it = cmdList.begin() + index; it >= cmdList.begin(); it--) {
+						switch (it->type) {
+						case loop_start: loopCount++; break;
+						case loop_end: loopCount--; break;
+						}
+						if (loopCount == 0) {
+							cmdList.erase(it);
+							index--;
+							break;
+						}
+					}
+				}
+
 				cmdList.erase(cmdList.begin() + index);
 			}
 		}
