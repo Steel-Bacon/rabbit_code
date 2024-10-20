@@ -1,46 +1,37 @@
-#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 #define OLC_PGE_APPLICATION
 #include "olcPixelGameEngine.h"
 #include "GameState.h"
 #include "Asset.h"
 
 // Override base class with your custom functionality
-class Example : public olc::PixelGameEngine
-{
+class GameEngine : public olc::PixelGameEngine {
+private:
+	shi::StateManager stateManager;
+
 public:
-	Example()
+	GameEngine()
 	{
 		// Name you application
 		sAppName = "Example";
 	}
 
-public:
-	State *temp, *state = new SplashState();
-
 	bool OnUserCreate() override
 	{
 		asset::loadAllAssets();
+		stateManager.setState<SplashState>();
+		stateManager.setFPS(60);
 		return true;
 	}
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
-		if (state == nullptr) { return false; }
-		else { 
-			temp = state->run(fElapsedTime, this); 
-			if (state != temp) { 
-				delete state;
-				state = temp; 
-			}
-		}
-		return true;
+		return stateManager.run(fElapsedTime, this);
 	}
 };
 
-int main()
-{
-	Example demo;
-	if (demo.Construct(400, 300, 2, 2))
-		demo.Start();
+int main() {
+	GameEngine game;
+	if (game.Construct(400, 300, 2, 2))
+		game.Start();
 	return 0;
 }

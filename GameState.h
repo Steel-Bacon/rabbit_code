@@ -8,12 +8,9 @@
 
 olc::vi2d tileSize = { 30,30 };
 
-class State{
-public:
-	virtual State* run(float fElapsedTime, olc::PixelGameEngine* engine) = 0;
-};
 
-class SplashState :public State {
+
+class SplashState : public shi::State {
 private:
 	bool state_ini = true;
 	float displayedTime = 0.0;
@@ -21,13 +18,14 @@ private:
 	shi::SimpleSprite sprSlime;
 	shi::SimpleSprite sprMenu;
 public:
-	State* run(float fElapsedTime, olc::PixelGameEngine* engine)override;
+	bool ini()override;
+	bool run(float fElapsedTime, olc::PixelGameEngine* engine)override;
 };
 
-class GameState :public State {
+class GameState : public shi::State {
 private:
 	//初始化物件宣告
-	std::unique_ptr<shi::SimpleSprite> onDrag;
+	shi::SimpleSprite sprDragging;
 	shi::SimpleSprite sprForward;
 	shi::SimpleSprite sprLoop;
 	shi::SimpleSprite sprLeft;
@@ -37,8 +35,8 @@ private:
 	shi::SimpleSprite sprReset;
 	shi::SimpleSprite sprStar;
 	std::shared_ptr<shiMap::MapData> mapData;
-	std::vector<std::unique_ptr<shi::SimpleSprite>> sprSideLineList;
-	std::map<int, std::unique_ptr<shi::SimpleSprite>> sprCoinList;
+	shi::SimpleSprite sprSideLine;
+	shi::SimpleSprite sprCoin;
 	std::vector<olc::vi2d> coinPosList;
 	shi::SimpleSprite sprSea;
 	shi::SimpleSprite sprBar;
@@ -54,7 +52,8 @@ private:
 		turn_left,
 		turn_right,
 		loop_start,
-		loop_end
+		loop_end,
+		loop_both
 	};
 	class Cmd {
 	public:
@@ -78,6 +77,7 @@ private:
 		case down: return { 0,1 };
 		case left: return { -1,0 };
 		case right: return { 1,0 };
+		default: return { 0,0 };
 		}
 	}
 	direction playerDir = right;
@@ -88,12 +88,12 @@ private:
 private:
 	//遊戲狀態相關宣告
 	enum actionState {
-		state_ini,
+		loadMap,
 		editCommand,
 		execCommand,
 		levelCleared
 	};
-	actionState currentAction = state_ini;
+	actionState currentAction = loadMap;
 	int programCount = 0;
 	std::vector<int> loopCountList;
 	std::vector<int> loopRteurnList;
@@ -103,26 +103,28 @@ private:
 	int currentCoinGet = 0;
 
 public:
-	State* run(float fElapsedTime, olc::PixelGameEngine* engine) override;
+	bool ini()override;
+	bool run(float fElapsedTime, olc::PixelGameEngine* engine) override;
 };
 
 //-----------------------以上為宣告-----------------------------
 //-----------------------以下為實作-----------------------------
 
-State* SplashState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
+bool SplashState::ini() {
+	sprSlime.ini(asset::sprSlime);
+	sprSlime.pos = (olc::vi2d(400, 300) - sprSlime.getSize()) / 2;
+	sprMenu.ini(asset::sprMenu);
+	sprMenu.setSize({ 400,300 });
+	return true;
+}
+
+bool SplashState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 	//開啟遊戲時顯示史萊姆商標
 	engine->Clear(olc::BLACK);
-	if (state_ini) {
-		state_ini = false;
-		sprSlime.ini(asset::sprSlime);
-		sprSlime.pos = (olc::vi2d(400, 300) - sprSlime.getSize()) / 2;
-		sprMenu.ini(asset::sprMenu);
-		sprMenu.setSize({ 400,300 });
-	}
-	else displayedTime += fElapsedTime;
+	displayedTime += fElapsedTime;
 	if (displayedTime > 3) {
 		sprMenu.draw(engine);
-		if(engine->GetMouse(0).bPressed) return new GameState();
+		if(engine->GetMouse(0).bPressed) swapState<GameState>();
 	}
 	else if (displayedTime > 2) {
 		sprMenu.tint = olc::PixelF(1.0, 1.0, 1.0, displayedTime-2);
@@ -140,43 +142,56 @@ State* SplashState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 		sprSlime.tint = olc::PixelF(1.0, 1.0, 1.0, slimeAlpha);
 		sprSlime.draw(engine);
 	}
-	return this;
+	return true;
 }
 
-State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
+bool GameState::ini() {
+	//初始化階段，只執行一次
+	sprDragging.ini(asset::sprForward);
+	sprDragging.setSize({ 50,50 });
+	sprForward.ini(asset::sprForward, { 300,0 });
+	sprForward.setSize({ 50,50 });
+	sprLoop.ini(asset::sprLoop, { 300,50 });
+	sprLoop.setSize({ 50,50 });
+	sprLeft.ini(asset::sprLeft, { 300,100 });
+	sprLeft.setSize({ 50,50 });
+	sprRight.ini(asset::sprRight, { 300,150 });
+	sprRight.setSize({ 50,50 });
+	sprStart.ini(asset::sprStart, { 300,210 });
+	sprStart.setSize({ 50,30 });
+	sprReset.ini(asset::sprReset, { 300,260 });
+	sprReset.setSize({ 50,30 });
+	sprSea.ini(asset::sprSea);
+	sprSea.setSize({ 400,300 });
+	sprBar.ini(asset::sprBar, { 350,0 });
+	sprBar.setSize({ 50,300 });
+	sprWin.ini(asset::sprWin, { 75,25 });
+	sprWin.setSize({ 250,250 });
+	sprNext.ini(asset::sprNext, { 75,25 });
+	sprNext.setSize({ 250,250 });
+	sprStar.ini(asset::sprStar);
+	sprSideLine.ini(asset::sprLoop_side);
+	sprCoin.ini(asset::aniCoin);
+	sprCoin.setSize({ 20,20 });
+	for (int i = 0; i < 14; i++) {
+		cmdSprt[i].ini(asset::sprForward, { 350, i * 20 -5});
+	}
+	player.ini(asset::aniPlayerIdle);
+	player.setSize(tileSize);
+	return true;
+}
+
+bool GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 	switch (currentAction) {
-	case state_ini:
-		//初始化階段，只執行一次
-		sprForward.ini(asset::sprForward, { 300,0 });
-		sprForward.setSize({ 50,50 });
-		sprLoop.ini(asset::sprLoop, { 300,50 });
-		sprLoop.setSize({ 50,50 });
-		sprLeft.ini(asset::sprLeft, { 300,100 });
-		sprLeft.setSize({ 50,50 });
-		sprRight.ini(asset::sprRight, { 300,150 });
-		sprRight.setSize({ 50,50 });
-		sprStart.ini(asset::sprStart, { 300,210 });
-		sprStart.setSize({ 50,30 });
-		sprReset.ini(asset::sprReset, { 300,260 });
-		sprReset.setSize({ 50,30 });
-		sprSea.ini(asset::sprSea);
-		sprSea.setSize({ 400,300 });
-		sprBar.ini(asset::sprBar, { 350,0 });
-		sprBar.setSize({ 50,300 });
-		sprWin.ini(asset::sprWin, { 75,25 });
-		sprWin.setSize({ 250,250 });
-		sprNext.ini(asset::sprNext, { 75,25 });
-		sprNext.setSize({ 250,250 });
-		if (mapIndex > 8) {
-			//遊戲結束
-		}
-		else mapData = shiMap::maps[mapIndex];//載入地圖
+	case loadMap:
+		//載入地圖
+		mapData = shiMap::maps[mapIndex];
 		playerPos = mapData->getSpawnPoint();
 		lastPos = playerPos;
 		coinPosList = mapData->getCoinPos();
-		sprStar.ini(asset::sprStar, mapData->getStarPos()*30);
+		sprStar.pos = mapData->getStarPos()*tileSize;
 		for (int x = 0; x < 10; x++) for (int y = 0; y < 10; y++) {
-			switch (mapData.get()->getMap()[x + 10*y]) {
+			switch (mapData->getMap()[x + 10*y]) {
 			case 0:
 				map[x][y].ini(asset::sprGround, tileSize * olc::vi2d(x, y));
 				break;
@@ -185,157 +200,110 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 				break;
 			}
 		}
-		for (int i = 0; i < 14; i++) {
-			cmdSprt[i].ini(asset::sprForward, { 350, i * 20 -5});
-		}
-		for (int i = 0; i < coinPosList.size(); i++) {
-			sprCoinList[coinPosList[i].x * 10 + coinPosList[i].y] = std::make_unique<shi::SimpleSprite>();
-			sprCoinList[coinPosList[i].x * 10 + coinPosList[i].y]->animation = asset::aniCoin;
-		}
-		player.ini(asset::aniPlayerIdle, playerPos * tileSize);
-		player.setSize(tileSize);
-		currentAction = editCommand;
-		cmdList.clear();
-		programCount = 0;
+		player.pos = playerPos * tileSize;
 		playerDir = right;
+		player.animation = asset::aniPlayerIdle;
+		cmdList.clear();
 		loopCountList.clear();
 		loopRteurnList.clear();
+		programCount = 0;
 		animationTime = 0;
 		currentCoinGet = 0;
+		currentAction = editCommand;
 		break;
 	case editCommand:
-		//指令編輯模式，接受玩家操作
+		//指令編輯模式，接受玩家操作@
 
 		//滑鼠點擊左鍵，判斷玩家點了甚麼東西
 		if (engine->GetMouse(0).bPressed) {
 			olc::vi2d mousePos = engine->GetMousePos();
 
-			if (mousePos.x > 300 && mousePos.x < 350) {
-				//點擊控制元件時
-				if (mousePos.y < 50) { //拉取前進止令
-					onDrag = std::make_unique<shi::SimpleSprite>(asset::sprForward);
-					onDragCmd = forward;
+			//點擊控制元件時
+			if (sprForward.contain(mousePos)) { //拉取前進止令
+				sprDragging.setSprite(asset::sprForward);
+				onDragCmd = forward;
+			} else if (sprLoop.contain(mousePos)) { //拉取迴圈止令
+				sprDragging.setSprite(asset::sprLoop);
+				onDragCmd = loop_both;
+			} else if (sprLeft.contain(mousePos)) { //拉取左轉止令
+				sprDragging.setSprite(asset::sprLeft);
+				onDragCmd = turn_left;
+			} else if (sprRight.contain(mousePos)) { //拉取右轉止令
+				sprDragging.setSprite(asset::sprRight);
+				onDragCmd = turn_right;
+			} else if (sprStart.contain(mousePos) && cmdList.size()>0) {
+				//點擊開始按鈕，切換到執行指令模式
+				currentAction = execCommand;
+				int loops = 0;
+				for (int i = 0; i < cmdList.size(); i++) {
+					if (cmdList[i].type == loop_start) loops++;
+					else if (cmdList[i].type == loop_end) loops--;
+					if (loops < 0) currentAction = editCommand;
 				}
-				else if (mousePos.y < 100) { //拉取迴圈止令
-					onDrag = std::make_unique<shi::SimpleSprite>(asset::sprLoop);
-					onDragCmd = loop_start;
-				}
-				else if (mousePos.y < 150) { //拉取左轉止令
-					onDrag = std::make_unique<shi::SimpleSprite>(asset::sprLeft);
-					onDragCmd = turn_left;
-				}
-				else if (mousePos.y < 200) { //拉取右轉止令
-					onDrag = std::make_unique<shi::SimpleSprite>(asset::sprRight);
-					onDragCmd = turn_right;
-				}
-				else if (mousePos.y < 250 && cmdList.size()>0) {
-					//點擊開始按鈕，切換到執行指令模式
-					currentAction = execCommand;
-					int loopCount = 0;
-					for (int i = 0; i < cmdList.size(); i++) {
-						if (cmdList[i].type == loop_start) loopCount++;
-						else if (cmdList[i].type == loop_end) loopCount--;
-						if (loopCount < 0) currentAction = editCommand;
-					}
-					if (loopCount > 0) currentAction = editCommand;
-				}
-			}
-			else if (mousePos.x > 350) {
+				if (loops > 0) currentAction = editCommand;
+			} else if (mousePos.x > 350) {
 				//點擊指令列時
-				int index = (engine->GetMouseY() - 15) / 20, loopCount = 0;
+				int index = (engine->GetMouseY() - 15) / 20;
 				if (index < cmdList.size()) {
+					onDragCmd = cmdList[index].type;
 					switch (cmdList[index].type) {
 					case forward:
-						onDragCmd = cmdList[index].type;
-						onDrag = std::make_unique<shi::SimpleSprite>(asset::sprForward);
-						cmdList.erase(cmdList.begin() + index);
+						sprDragging.setSprite(asset::sprForward);
 						break;
 					case turn_left:
-						onDragCmd = cmdList[index].type;
-						onDrag = std::make_unique<shi::SimpleSprite>(asset::sprLeft);
-						cmdList.erase(cmdList.begin() + index);
+						sprDragging.setSprite(asset::sprLeft);
 						break;
 					case turn_right:
-						onDragCmd = cmdList[index].type;
-						onDrag = std::make_unique<shi::SimpleSprite>(asset::sprRight);
-						cmdList.erase(cmdList.begin() + index);
+						sprDragging.setSprite(asset::sprRight);
 						break;
 					case loop_start:
-						onDragCmd = loop_start;
-						onDrag = std::make_unique<shi::SimpleSprite>(asset::sprLoop);
-						//如果是迴圈頭，就刪除對應的迴圈尾
-						loopCount = 0;
-						for (auto it = cmdList.begin() + index; it != cmdList.end(); it++) {
-							switch (it->type) {
-							case loop_start: loopCount++; break;
-							case loop_end: loopCount--; break;
-							}
-							if (loopCount == 0) {
-								cmdList.erase(it);
-								break;
-							}
-						}
-						cmdList.erase(cmdList.begin() + index);
+						sprDragging.setSprite(asset::sprLoop_start);
 						break;
 					case loop_end:
-						onDragCmd = loop_start;
-						onDrag = std::make_unique<shi::SimpleSprite>(asset::sprLoop);
-						//如果是迴圈尾，就刪除對應的迴圈頭
-						loopCount = 0;
-						for (auto it = cmdList.begin() + index; it >= cmdList.begin(); it--) {
-							switch (it->type) {
-							case loop_start: loopCount++; break;
-							case loop_end: loopCount--; break;
-							}
-							if (loopCount == 0) {
-								cmdList.erase(it);
-								index--;
-								break;
-							}
-						}
-						cmdList.erase(cmdList.begin() + index);
+						sprDragging.setSprite(asset::sprLoop_end);
 						break;
 					}
+				}
+				if (onDragCmd != none) {
+					cmdList.erase(cmdList.begin()+ index);
 				}
 			}
 		}
 
 		//拖拉狀態，讓拖曳的東西跟著滑鼠移動
-		if (onDrag != nullptr) {
+		if (onDragCmd != none) {
 			if (engine->GetMouse(0).bHeld) {
-				onDrag.get()->pos = engine->GetMousePos() - onDrag.get()->getSize() / 2;
-				onDrag.get()->tint = olc::PixelF(1.0, 1.0, 1.0, 0.5);
+				sprDragging.pos = engine->GetMousePos() - sprDragging.getSize() / 2;
+				sprDragging.tint = olc::PixelF(1.0, 1.0, 1.0, 0.5);
 
+				for (auto it = cmdList.begin(); it < cmdList.end(); it++) {
+					while (it->type == none) cmdList.erase(it);
+				}
 				//指令拖到指令列上方時，預判放置指令的位置
-				if (engine->GetMouseX() > 350 && 
-					(mouseHoverIndex>=0 || 
-						cmdList.size() < 13 || 
-						onDragCmd != loop_start && cmdList.size() < 14)) 
-				{
+				if (engine->GetMouseX() > 350) {
 					mouseHoverIndex = (engine->GetMouseY() - 15) / 20;
-					if (mouseHoverIndex < cmdList.size() && cmdList[mouseHoverIndex].type != none) {
-						for (auto it = cmdList.begin(); it != cmdList.end(); it++) {
-							if (it->type == none) {
-								cmdList.erase(it);
-								break;
+					if (mouseHoverIndex < cmdList.size()) {
+						if (onDragCmd == loop_both) {
+							if (cmdList.size() < 13) {
+								cmdList.insert(cmdList.begin() + mouseHoverIndex, none);
+								cmdList.insert(cmdList.begin() + mouseHoverIndex, none);
 							}
 						}
-						cmdList.insert(cmdList.begin() + mouseHoverIndex, none);
-					}
-				}
-				else if (mouseHoverIndex >= 0) {
-					for (auto it = cmdList.begin(); it != cmdList.end(); it++) {
-						if (it->type == none) {
-							cmdList.erase(it);
-							break;
+						else if(cmdList.size() < 14) {
+							cmdList.insert(cmdList.begin() + mouseHoverIndex, none);
 						}
 					}
+				}
+				else {
 					mouseHoverIndex = -1;
 				}
 			}
 
 			//放開拖曳的東西，判斷放在哪裡
 			if (engine->GetMouse(0).bReleased) {
+				for (auto it = cmdList.begin(); it < cmdList.end(); it++) {
+					while (it->type == none) cmdList.erase(it);
+				}
 				if (mouseHoverIndex >= 0) {
 					if (mouseHoverIndex < cmdList.size()) {
 						//在指令列內，插入指令
@@ -349,9 +317,17 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 						case turn_right:
 							cmdList.insert(cmdList.begin() + mouseHoverIndex, turn_right);
 							break;
+						case loop_both:
+							if(cmdList.size() < 13) {
+								cmdList.insert(cmdList.begin() + mouseHoverIndex, loop_end);
+								cmdList.insert(cmdList.begin() + mouseHoverIndex, loop_start);
+							}
+							break;
 						case loop_start:
-							cmdList.insert(cmdList.begin() + mouseHoverIndex, loop_end);
 							cmdList.insert(cmdList.begin() + mouseHoverIndex, loop_start);
+							break;
+						case loop_end:
+							cmdList.insert(cmdList.begin() + mouseHoverIndex, loop_end);
 							break;
 						}
 					}else {
@@ -366,8 +342,16 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 						case turn_right:
 							cmdList.push_back(turn_right);
 							break;
+						case loop_both:
+							if(cmdList.size() < 13) {
+								cmdList.push_back(loop_start);
+								cmdList.push_back(loop_end);
+							}
+							break;
 						case loop_start:
 							cmdList.push_back(loop_start);
+							break;
+						case loop_end:
 							cmdList.push_back(loop_end);
 							break;
 						}
@@ -375,14 +359,7 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 				}
 
 				//結束拖曳狀態
-				onDrag = nullptr;
-				onDragCmd = none; 
-				for (auto it = cmdList.begin(); it != cmdList.end(); it++) {
-					if (it->type == none) {
-						cmdList.erase(it);
-						break;
-					}
-				}
+				onDragCmd = none;
 				mouseHoverIndex = -1;
 			}
 		}
@@ -391,38 +368,6 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 		if (engine->GetMouse(1).bPressed && engine->GetMouseX() > 350) {
 			int index = (engine->GetMouseY() - 15) / 20;
 			if (index < cmdList.size()) {
-
-				if ((cmdList.begin() + index)->type == loop_start) {
-					//如果是迴圈頭，就刪除對應的迴圈尾
-					int loopCount = 0;
-					for (auto it = cmdList.begin() + index; it != cmdList.end(); it++) {
-						switch (it->type) {
-						case loop_start: loopCount++; break;
-						case loop_end: loopCount--; break;
-						}
-						if (loopCount == 0) {
-							cmdList.erase(it);
-							break;
-						}
-					}
-				}
-
-				if ((cmdList.begin() + index)->type == loop_end) {
-					//如果是迴圈尾，就刪除對應的迴圈頭
-					int loopCount = 0;
-					for (auto it = cmdList.begin() + index; it >= cmdList.begin(); it--) {
-						switch (it->type) {
-						case loop_start: loopCount++; break;
-						case loop_end: loopCount--; break;
-						}
-						if (loopCount == 0) {
-							cmdList.erase(it);
-							index--;
-							break;
-						}
-					}
-				}
-
 				cmdList.erase(cmdList.begin() + index);
 			}
 		}
@@ -525,8 +470,7 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 				break;
 			}
 			//根據玩家方向改變圖案
-			switch (playerDir)
-			{
+			switch (playerDir) {
 			case up:
 				player.animation = asset::aniPlayerUp;
 				break;
@@ -552,9 +496,7 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 		}
 
 		//若玩家按下重置按鈕，則重置遊戲回到執行前狀態
-		if (engine->GetMouse(0).bPressed &&
-			engine->GetMouseX() > 300 && engine->GetMouseX() < 350 &&
-			engine->GetMouseY() > 250 && engine->GetMouseY() < 300) {
+		if (engine->GetMouse(0).bPressed && sprReset.contain(engine->GetMousePos())) {
 			playerPos = mapData->getSpawnPoint();
 			lastPos = playerPos;
 			playerDir = right;
@@ -572,10 +514,10 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 		//過關畫面
 		if (engine->GetMouse(0).bPressed) {
 			mapIndex++;
-			currentAction = state_ini;
+			currentAction = loadMap;
 			totalCoinGet += currentCoinGet;
 			currentCoinGet = 0;
-			if (mapIndex == 9 || mapIndex == 8 && (totalCoinGet + currentCoinGet) < 81) return new SplashState();
+			if (mapIndex == 9 || mapIndex == 8 && (totalCoinGet + currentCoinGet) < 81) swapState<SplashState>();
 		}
 		break;
 	}
@@ -587,16 +529,15 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 	//畫出地圖方格(地板和天空))
 	sprSea.draw(engine);
 	for (int x = 0; x < 10; x++) for (int y = 0; y < 10; y++) {
-		if(mapData.get()->getMap()[x + 10 * y] == 0) map[x][y].draw(engine);
+		if(mapData->getMap()[x + 10 * y] == 0) map[x][y].draw(engine);
 	}
 	sprBar.draw(engine);
 
 	//畫出金幣
+	sprCoin.runAnimation(fElapsedTime);
 	for (int i = 0; i < coinPosList.size(); i++) {
-		int index = coinPosList[i].x * 10 + coinPosList[i].y;
-		sprCoinList[index]->pos = coinPosList[i] * 30 + olc::vi2d(5, 5);
-		sprCoinList[index]->drawAnimation(engine, fElapsedTime);
-		sprCoinList[index]->setSize({ 20,20 });
+		sprCoin.pos = coinPosList[i] * tileSize + olc::vi2d(5, 5);
+		sprCoin.draw(engine);
 	}
 
 	//畫出右側的指令列
@@ -623,9 +564,8 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 
 		//在迴圈裡的指令右移，並畫出迴圈左側邊邊
 		for (int j = 0; j < inLoop; j++) {
-			if(j >= sprSideLineList.size()) sprSideLineList.push_back(std::make_unique<shi::SimpleSprite>(asset::sprLoop_side));
-			sprSideLineList[j]->pos = { 350 + j * 3,cmdSprt[i].pos.y };
-			sprSideLineList[j]->draw(engine);
+			sprSideLine.pos = { 350 + j * 3 , cmdSprt[i].pos.y };
+			sprSideLine.draw(engine);
 		}
 		cmdSprt[i].pos.x = 350 + inLoop * 3;
 		if (cmdList[i].type == loop_start) inLoop++;
@@ -650,14 +590,15 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 	sprReset.draw(engine);
 	sprStar.draw(engine);
 	//畫出正在拖拉的元件
-	if (onDrag != nullptr) onDrag.get()->draw(engine);
+	if (onDragCmd != none) sprDragging.draw(engine);
 
 	//畫出主角，在執行時跟著指令移動
 	if(animationTime>0 && cmdList[programCount].type == forward)
 		player.pos = playerPos * tileSize - olc::vf2d(playerPos * tileSize - lastPos * tileSize) * animationTime * 2;
 	else
 		player.pos = playerPos * tileSize;
-	player.drawAnimation(engine, fElapsedTime);
+	player.runAnimation(fElapsedTime);
+	player.draw(engine);
 
 	engine->DrawStringDecal({ 2,2 }, "Level "+ std::to_string(mapIndex)+"\nCoin: "+std::to_string(totalCoinGet+currentCoinGet), olc::BLACK);
 
@@ -669,5 +610,5 @@ State* GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 		else sprNext.draw(engine);
 	}
 
-	return this;
+	return true;
 }

@@ -396,7 +396,7 @@ namespace shiMap {
 		// total 100 Coins
 	};
 
-	static std::shared_ptr<MapData> maps[9] = {
+	std::shared_ptr<MapData> maps[9] = {
 		std::make_shared<testMap>(),
 		std::make_shared<level1Map>(),
 		std::make_shared<level2Map>(),
