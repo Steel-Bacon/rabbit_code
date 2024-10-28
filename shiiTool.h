@@ -46,18 +46,24 @@ namespace shi {
 	class SprAnima {
 	public:
 		struct _frame {
-			std::shared_ptr<olc::Sprite> sprite;
+			std::shared_ptr<olc::Renderable> renderable;
 			float duration;
 		};
 		std::vector<_frame> frameList;
-		void addFrame(std::shared_ptr<olc::Sprite> sprite, float duration) {
-			frameList.push_back({ sprite,duration });
+		float fullLoopDuration = 0.0;
+		void addFrame(const char* path, float duration) {
+			std::shared_ptr<olc::Renderable> renderable = std::make_shared<olc::Renderable>();
+			renderable->Load(path);
+			addFrame(renderable, duration);
+		}
+		void addFrame(std::shared_ptr<olc::Renderable> renderable, float duration) {
+			frameList.push_back({ renderable,duration });
+			fullLoopDuration += duration;
 		}
 	};
 
 	struct SimpleSprite {
-		std::shared_ptr<olc::Sprite> sprite;
-		std::unique_ptr<olc::Decal> decal;
+		std::shared_ptr<olc::Renderable> renderable;
 		std::shared_ptr<SprAnima> animation = nullptr;
 		int aniIndex = 0;
 		float aniDuration = 0.0;
@@ -67,52 +73,65 @@ namespace shi {
 		olc::Pixel tint = olc::WHITE;
 		SimpleSprite() {};
 		SimpleSprite(const char* path, const olc::vi2d& pos = { 0,0 }, const olc::vf2d& scale = { 1.0f,1.0f }, const olc::Pixel& tint = olc::WHITE) {
-			sprite = std::make_shared<olc::Sprite>(path);
-			ini(sprite, pos, scale, tint); 
+			renderable = std::make_shared<olc::Renderable>();
+			renderable->Load(path);
+			ini(renderable, pos, scale, tint); 
 		}; 
-		SimpleSprite(std::shared_ptr<olc::Sprite> sprite, const olc::vi2d& pos = { 0,0 }, const olc::vf2d& scale = { 1.0f,1.0f }, const olc::Pixel& tint = olc::WHITE) {
-			ini(sprite, pos, scale, tint);
+		SimpleSprite(std::shared_ptr<olc::Renderable> renderable, const olc::vi2d& pos = { 0,0 }, const olc::vf2d& scale = { 1.0f,1.0f }, const olc::Pixel& tint = olc::WHITE) {
+			ini(renderable, pos, scale, tint);
 		};
-		void ini(std::shared_ptr<olc::Sprite> sprite, const olc::vi2d& pos = { 0,0 }, const olc::vf2d& scale = { 1.0f,1.0f }, const olc::Pixel& tint = olc::WHITE) {
+		void ini(std::shared_ptr<olc::Renderable> renderable, const olc::vi2d& pos = { 0,0 }, const olc::vf2d& scale = { 1.0f,1.0f }, const olc::Pixel& tint = olc::WHITE) {
 			this->pos = pos;
 			this->scale = scale;
 			this->tint = tint;
-			setSprite(sprite);
+			setRenderable(renderable);
 		}; 
 		void ini(std::shared_ptr<SprAnima> ani, const olc::vi2d& pos = { 0,0 }, const olc::vf2d& scale = { 1.0f,1.0f }, const olc::Pixel& tint = olc::WHITE) {
 			this->pos = pos;
 			this->scale = scale;
 			this->tint = tint;
-			setSprite(ani->frameList[0].sprite);
-			animation = ani;
-			aniDuration = animation->frameList[0].duration;
+			setAnimation(ani);
 		};
 		void draw(olc::PixelGameEngine* engine) {
-			engine->DrawDecal(pos, decal.get(), scale, tint);
+			engine->DrawDecal(pos, renderable->Decal(), scale, tint);
 		}
 		olc::vi2d getSize() {
 			return size;
 		}
 		void setSize(olc::vi2d newSize) {
 			size = newSize;
-			scale = { (float)size.x / sprite->width, size.y / (float)sprite->height };
+			if(renderable != nullptr) scale = { (float)size.x / renderable->Sprite()->width, (float)size.y / renderable->Sprite()->height };
 		}
-		void setSprite(std::shared_ptr<olc::Sprite> newSprite) {
-			sprite = newSprite;
-			decal = std::make_unique<olc::Decal>(sprite.get());
-			size = sprite->Size() * scale;
+		void setRenderable(std::shared_ptr<olc::Renderable> newRenderable) {
+			renderable = newRenderable;
+			size = renderable->Sprite()->Size() * scale;
+		}
+		void setAnimation(std::shared_ptr<SprAnima> newAnimation) {
+			animation = newAnimation;
+			aniIndex = 0;
+			aniDuration = animation->frameList[0].duration;
+			setRenderable(animation->frameList[0].renderable);
 		}
 		void runAnimation(float fElapsedTime) {
 			aniDuration -= fElapsedTime;
 			if (aniDuration <= 0) {
 				aniIndex++;
 				if (aniIndex >= animation->frameList.size()) aniIndex = 0;
-				aniDuration = animation->frameList[aniIndex].duration;
-				setSprite(animation->frameList[aniIndex].sprite);
+				aniDuration += animation->frameList[aniIndex].duration;
+				setRenderable(animation->frameList[aniIndex].renderable);
 			}
 		}
 		bool contain(olc::vi2d point) {
 			return point.x >= pos.x && point.x <= pos.x + size.x && point.y >= pos.y && point.y <= pos.y + size.y;
+		}
+		bool collide(SimpleSprite& spr) {
+			return collide(spr.pos, spr.size);
+		}
+		bool collide(olc::vi2d _pos, olc::vi2d _size) {
+			return !(_pos.x + _size.x < pos.x //onLeft
+				|| _pos.x > pos.x + size.x //onRight
+				|| _pos.y + _size.y < pos.y //above
+				|| _pos.y > pos.y + size.y); //below
 		}
 	};
 }

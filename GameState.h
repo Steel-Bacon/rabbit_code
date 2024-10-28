@@ -202,7 +202,7 @@ bool GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 		}
 		player.pos = playerPos * tileSize;
 		playerDir = right;
-		player.animation = asset::aniPlayerIdle;
+		player.setAnimation(asset::aniPlayerIdle);
 		cmdList.clear();
 		loopCountList.clear();
 		loopRteurnList.clear();
@@ -220,16 +220,16 @@ bool GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 
 			//點擊控制元件時
 			if (sprForward.contain(mousePos)) { //拉取前進止令
-				sprDragging.setSprite(asset::sprForward);
+				sprDragging.setRenderable(asset::sprForward);
 				onDragCmd = forward;
 			} else if (sprLoop.contain(mousePos)) { //拉取迴圈止令
-				sprDragging.setSprite(asset::sprLoop);
+				sprDragging.setRenderable(asset::sprLoop);
 				onDragCmd = loop_both;
 			} else if (sprLeft.contain(mousePos)) { //拉取左轉止令
-				sprDragging.setSprite(asset::sprLeft);
+				sprDragging.setRenderable(asset::sprLeft);
 				onDragCmd = turn_left;
 			} else if (sprRight.contain(mousePos)) { //拉取右轉止令
-				sprDragging.setSprite(asset::sprRight);
+				sprDragging.setRenderable(asset::sprRight);
 				onDragCmd = turn_right;
 			} else if (sprStart.contain(mousePos) && cmdList.size()>0) {
 				//點擊開始按鈕，切換到執行指令模式
@@ -248,19 +248,19 @@ bool GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 					onDragCmd = cmdList[index].type;
 					switch (cmdList[index].type) {
 					case forward:
-						sprDragging.setSprite(asset::sprForward);
+						sprDragging.setRenderable(asset::sprForward);
 						break;
 					case turn_left:
-						sprDragging.setSprite(asset::sprLeft);
+						sprDragging.setRenderable(asset::sprLeft);
 						break;
 					case turn_right:
-						sprDragging.setSprite(asset::sprRight);
+						sprDragging.setRenderable(asset::sprRight);
 						break;
 					case loop_start:
-						sprDragging.setSprite(asset::sprLoop_start);
+						sprDragging.setRenderable(asset::sprLoop_start);
 						break;
 					case loop_end:
-						sprDragging.setSprite(asset::sprLoop_end);
+						sprDragging.setRenderable(asset::sprLoop_end);
 						break;
 					}
 				}
@@ -472,27 +472,24 @@ bool GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 			//根據玩家方向改變圖案
 			switch (playerDir) {
 			case up:
-				player.animation = asset::aniPlayerUp;
+				player.setAnimation(asset::aniPlayerUp);
 				break;
 			case down:
-				player.animation = asset::aniPlayerDown;
+				player.setAnimation(asset::aniPlayerDown);
 				break;
 			case left:
-				player.animation = asset::aniPlayerLeft;
+				player.setAnimation(asset::aniPlayerLeft);
 				break;
 			case right:
-				player.animation = asset::aniPlayerRight;
+				player.setAnimation(asset::aniPlayerRight);
 				break;
 			}
-			animationTime = 0.5f;
+			animationTime = player.animation->fullLoopDuration;
 		}
-
-		//若指令執行完畢，進入等待
-		if (programCount >= cmdList.size()) {
-			loopCountList.clear();
-			loopRteurnList.clear();
-			animationTime = 0;
-			player.animation = asset::aniPlayerIdle;
+		else if (programCount >= cmdList.size()) {
+			//若指令執行完畢，進入等待
+			player.setAnimation(asset::aniPlayerIdle);
+			animationTime = player.animation->fullLoopDuration;
 		}
 
 		//若玩家按下重置按鈕，則重置遊戲回到執行前狀態
@@ -500,7 +497,7 @@ bool GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 			playerPos = mapData->getSpawnPoint();
 			lastPos = playerPos;
 			playerDir = right;
-			player.animation = asset::aniPlayerIdle;
+			player.setAnimation(asset::aniPlayerIdle);
 			currentAction = editCommand;
 			programCount = 0;
 			loopCountList.clear();
@@ -545,20 +542,20 @@ bool GameState::run(float fElapsedTime, olc::PixelGameEngine* engine) {
 	for (int i = 0; i < cmdList.size(); i++) {
 		switch (cmdList[i].type) {
 		case forward:
-			cmdSprt[i].setSprite(asset::sprForward);
+			cmdSprt[i].setRenderable(asset::sprForward);
 			break;
 		case turn_left:
-			cmdSprt[i].setSprite(asset::sprLeft);
+			cmdSprt[i].setRenderable(asset::sprLeft);
 			break;
 		case turn_right:
-			cmdSprt[i].setSprite(asset::sprRight);
+			cmdSprt[i].setRenderable(asset::sprRight);
 			break;
 		case loop_start:
-			cmdSprt[i].setSprite(asset::sprLoop_start);
+			cmdSprt[i].setRenderable(asset::sprLoop_start);
 			break;
 		case loop_end:
 			inLoop--;
-			cmdSprt[i].setSprite(asset::sprLoop_end);
+			cmdSprt[i].setRenderable(asset::sprLoop_end);
 			break;
 		}
 
